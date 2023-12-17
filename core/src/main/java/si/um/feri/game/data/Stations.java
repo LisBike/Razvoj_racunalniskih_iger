@@ -33,12 +33,6 @@ public class Stations  {
                 while ((lines = reader.readLine()) != null) response.append(lines);
                 Json json = new Json();
                 stationArray = json.fromJson(Array.class, Station.class, response.toString());
-//                for (Station data : stationArray) {
-//                    double latitude = data.latitude;
-//                    double longitude = data.longitude;
-//
-//                    System.out.println("Latitude: " + latitude + ", Longitude: " + longitude);
-//                }
 
                 reader.close();
             }

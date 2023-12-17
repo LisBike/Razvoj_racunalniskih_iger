@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -66,6 +67,8 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 	// Stations
 	Stations stations;
 	private Stage stage;
+	boolean isStation = false;
+	String message = "";
 
 	@Override
 	public void create() {
@@ -74,7 +77,7 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 		shapeRenderer = new ShapeRenderer();
 		stage = new Stage();
 		try {
-			stations = new Stations("http://164.8.200.151:3000/locations");
+			stations = new Stations("http://164.8.200.74:3000/locations");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -141,17 +144,24 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 		Gdx.gl.glEnable(GL30.GL_BLEND);
 		shapeRenderer.setProjectionMatrix(camera.combined);
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+		if(isStation) {
+			drawMessage();
+		}
 		shapeRenderer.end();
 
 		Gdx.gl.glDisable(GL30.GL_BLEND);
 		batch.setProjectionMatrix(camera.combined);
 
 		batch.begin();
-		drawStations(Gdx.graphics.getDeltaTime());
+		drawStations();
+		if(isStation) {
+			font.setColor(Color.GREEN);
+			font.draw(batch, message, WIDTH / 3f, 110);
+		}
 		batch.end();
 	}
 
-	private void drawStations(float deltaTime) {
+	private void drawStations() {
 		for (Station station : stations.stationArray) {
 			PixelPosition marker = MapRasterTiles.getPixelPosition(station.latitude, station.longitude, MapRasterTiles.TILE_SIZE, ZOOM, beginTile.x, beginTile.y, HEIGHT);
 			batch.draw(Assets.bikeImg, marker.x-(Assets.bikeImg.getWidth()/2), marker.y-(Assets.bikeImg.getHeight()/2));
@@ -180,6 +190,7 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 		TiledMapTileLayer layer = (TiledMapTileLayer)tiledMap.getLayers().get(0); // get the first layer of the map
 
 		if (Gdx.input.justTouched()) {
+			isStation = false;
 			Vector3 clickCoordinates = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
 			Vector3 position = camera.unproject(clickCoordinates);
 			int x = (int) (position.x / layer.getTileWidth());
@@ -189,11 +200,15 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 
 			for (Station station : stations.stationArray) {
 				PixelPosition marker = MapRasterTiles.getPixelPosition(station.latitude, station.longitude, MapRasterTiles.TILE_SIZE, ZOOM, beginTile.x, beginTile.y, HEIGHT);
-				if (marker.x <= clickCoordinates.x && clickCoordinates.x <= marker.x + Assets.bikeImg.getWidth() &&
-						marker.y <= clickCoordinates.y && clickCoordinates.y <= marker.y + Assets.bikeImg.getHeight()) {
+
+				// Check if the click coordinates are within the bounds of the bike
+				if (isClickedOnBike(clickCoordinates.x, clickCoordinates.y, marker.x, marker.y, Assets.bikeImg.getWidth(), Assets.bikeImg.getHeight())) {
+					isStation = true;
+					message = showClickedMessage(station.name);
 				}
 			}
 		}
+
 
 		camera.zoom = MathUtils.clamp(camera.zoom, 0.5f, 2f);
 
@@ -202,6 +217,20 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 
 		camera.position.x = MathUtils.clamp(camera.position.x, effectiveViewportWidth / 2f, WIDTH - effectiveViewportWidth / 2f);
 		camera.position.y = MathUtils.clamp(camera.position.y, effectiveViewportHeight / 2f, HEIGHT - effectiveViewportHeight / 2f);
+	}
+	private boolean isClickedOnBike(float clickX, float clickY, float bikeX, float bikeY, float bikeWidth, float bikeHeight) {
+		return clickX >= bikeX - bikeWidth / 2 && clickX <= bikeX + bikeWidth / 2
+				&& clickY >= bikeY - bikeHeight / 2 && clickY <= bikeY + bikeHeight / 2;
+	}
+
+	private void drawMessage() {
+		shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 0.7f);
+		rect = new Rectangle(WIDTH / 2f - 850 / 2f, 75, 850, 50);
+		shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
+	}
+	private String showClickedMessage(String stationName) {
+		System.out.println("User clicked on station: " + stationName);
+		return "Station: " + stationName;
 	}
 
 
