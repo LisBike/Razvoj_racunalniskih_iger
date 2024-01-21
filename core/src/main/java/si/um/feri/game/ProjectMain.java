@@ -224,7 +224,7 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 				// Check if the click coordinates are within the bounds of the bike
 				if (isClickedOnBike(clickCoordinates.x, clickCoordinates.y, marker.x, marker.y, Assets.bikeImg.getWidth(), Assets.bikeImg.getHeight())) {
 					isStation = true;
-					message = showClickedMessage(station.name);
+					message = showClickedMessage(station.name,station.stands);
 				}
 			}
 		}
@@ -248,8 +248,8 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 		rect = new Rectangle(WIDTH / 2f - 850 / 2f, 30, 850, 100);
 		shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
 	}
-	private String showClickedMessage(String stationName) {
-		@SuppressWarnings("DefaultLocale") String message = String.format("%s\nFREE PARKING: %s\n", stationName);
+	private String showClickedMessage(String stationName, int stands) {
+		@SuppressWarnings("DefaultLocale") String message = String.format("%s\nFREE PARKING: %s\n", stationName, stands);
 		System.out.println(message);
 		return message;
 	}
