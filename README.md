@@ -1,4 +1,6 @@
-[libGDX](https://github.com/LisBike/Razvoj_racunalniskih_iger/blob/master/RRI.mp4/)
+
+![error](https://github.com/LisBike/Razvoj_racunalniskih_iger/blob/master/RRI.mp4)
+
 
 # lisbike_interface
 
