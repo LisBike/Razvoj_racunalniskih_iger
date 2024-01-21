@@ -6,12 +6,11 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -69,6 +68,8 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 	private Stage stage;
 	boolean isStation = false;
 	String message = "";
+	private Animation<TextureRegion> bikeAnimation;
+	private float stateTime;
 
 	@Override
 	public void create() {
@@ -77,7 +78,7 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 		shapeRenderer = new ShapeRenderer();
 		stage = new Stage();
 		try {
-			stations = new Stations("http://164.8.200.74:3000/locations");
+			stations = new Stations("http://164.8.200.26:3000/locations");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
@@ -125,7 +126,15 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 		}
 		layers.add(layer);
 
+
 		tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
+		TextureRegion[] bikeFrames = new TextureRegion[2];
+		bikeFrames[0] = new TextureRegion(new Texture(Gdx.files.internal("assets/bike1.png")));
+		bikeFrames[1] = new TextureRegion(new Texture(Gdx.files.internal("assets/bike2.png")));
+
+
+		bikeAnimation = new Animation<>(0.5f, bikeFrames);
+		stateTime = 0f;
 	}
 
 	@Override
@@ -153,6 +162,7 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 		batch.setProjectionMatrix(camera.combined);
 
 		batch.begin();
+		updateBikeRotations(Gdx.graphics.getDeltaTime());
 		drawStations();
 		if(isStation) {
 			font.setColor(Color.GREEN);
@@ -162,11 +172,21 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 	}
 
 	private void drawStations() {
-		for (Station station : stations.stationArray) {
+		for (int i = 0; i < stations.stationArray.size; i++) {
+			Station station = stations.stationArray.get(i);
 			PixelPosition marker = MapRasterTiles.getPixelPosition(station.latitude, station.longitude, MapRasterTiles.TILE_SIZE, ZOOM, beginTile.x, beginTile.y, HEIGHT);
-			batch.draw(Assets.bikeImg, marker.x-(Assets.bikeImg.getWidth()/2), marker.y-(Assets.bikeImg.getHeight()/2));
+
+
+			TextureRegion currentFrame = bikeAnimation.getKeyFrame(stateTime, true);
+
+
+			batch.draw(currentFrame, marker.x - (currentFrame.getRegionWidth() / 2), marker.y - (currentFrame.getRegionHeight() / 2));
 		}
 	}
+	private void updateBikeRotations(float deltaTime) {
+		stateTime += deltaTime; // Update the state time for animation
+	}
+
 
 	private void handleInput() {
 		if (Gdx.input.isKeyPressed(Input.Keys.A)) {
@@ -225,12 +245,13 @@ public class ProjectMain extends ApplicationAdapter implements GestureDetector.G
 
 	private void drawMessage() {
 		shapeRenderer.setColor(0.5f, 0.5f, 0.5f, 0.7f);
-		rect = new Rectangle(WIDTH / 2f - 850 / 2f, 75, 850, 50);
+		rect = new Rectangle(WIDTH / 2f - 850 / 2f, 30, 850, 100);
 		shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
 	}
 	private String showClickedMessage(String stationName) {
-		System.out.println("User clicked on station: " + stationName);
-		return "Station: " + stationName;
+		@SuppressWarnings("DefaultLocale") String message = String.format("%s\nFREE PARKING: %s\n", stationName);
+		System.out.println(message);
+		return message;
 	}
 
 
